@@ -1,0 +1,34 @@
+# Git
+.git/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest
+.pytest_cache/
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Documentos sintéticos y pruebas
+*.pdf
+Pruebas/
+tests/
+
+# Documentación Técnica
+explicacion_tecnica.txt
+contexto_antigravity.md
+contexto_asistente.md
