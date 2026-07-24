@@ -2,6 +2,7 @@
 Human-In-The-Loop (HITL) document management endpoints.
 """
 
+import logging
 import uuid
 from typing import Any
 
@@ -11,6 +12,8 @@ from pydantic import BaseModel, Field
 from app.api.dependencies import get_document_repository
 from app.domain.repositories import DocumentRepository
 from app.infrastructure.database.models import DocumentStatus
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/documents", tags=["HITL Documents"])
 
