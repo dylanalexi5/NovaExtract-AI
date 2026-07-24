@@ -210,3 +210,15 @@ Es el caso de uso con la **mayor relación Impacto / Riesgo**:
 
 ---
 *Desarrollado para la Evaluación Técnica de Dev Talenty.*
+
+---
+
+## 👨‍💻 Autor / Candidato
+
+**Dylan Alexis Rivera Ordoñez**  
+*Licenciado en Informática | Desarrollador de Software | IA Aplicada & Backend*  
+📍 Pasto, Colombia  
+📧 **Email:** [Dylanpasto@hotmail.com](mailto:Dylanpasto@hotmail.com)  
+🐙 **GitHub:** [github.com/dylanalexi5](https://github.com/dylanalexi5)  
+💼 **LinkedIn:** [linkedin.com/in/dylan-rivera](https://www.linkedin.com/in/dylan-rivera)
+
