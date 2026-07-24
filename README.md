@@ -1,154 +1,212 @@
 # DevTalenty AI Extractor 🚀
 
-DevTalenty AI Extractor es una API REST backend construida con **FastAPI** y **Arquitectura Limpia**, diseñada para resolver el cuello de botella más crítico en los equipos de reclutamiento: **la extracción estructurada de datos desde currículums (PDFs)**. 
-
-Utilizando un enfoque híbrido que combina reglas deterministas y NLP generativo (Large Language Models), este sistema ingiere binarios, sanitiza datos sensibles (PII) localmente y devuelve perfiles de candidatos estrictamente tipados en JSON listos para integrarse con cualquier ATS (Applicant Tracking System).
+**DevTalenty AI Extractor** es una solución enterprise backend construida con **FastAPI**, **Clean Architecture** y **Groq LPUs (Llama-3.3-70b)**, diseñada para resolver la automatización de procesos no estructurados (extracción de datos de CVs/documentos) en empresas SaaS B2B que transicionan hacia un modelo *AI-First*.
 
 ---
 
 ## 🛠️ Instrucciones de Instalación y Despliegue (Zero Friction)
 
 ### Requisitos Previos
-- Docker y Docker Compose instalados (Recomendado para evaluación rápida).
-- Python 3.11+ si deseas correrlo localmente.
-- Obtener una [Groq API Key](https://console.groq.com/keys) (gratuita).
+- **Docker & Docker Compose** (Recomendado).
+- **Python 3.11+** (Si se ejecuta en local).
+- **Groq API Key** (Obtenible gratuitamente en [console.groq.com](https://console.groq.com/keys)).
 
-### Opción 1: Despliegue Inmediato (Docker Compose) 🐳
-Esta es la manera recomendada para evaluadores técnicos, aislando la base de datos y dependencias en contenedores.
+### Opción 1: Despliegue Inmediato con Docker Compose 🐳
+```bash
+# 1. Clonar y configurar variables de entorno
+cp .env.example .env
+# Reemplazar GROQ_API_KEY en .env con tu API Key real
 
-1. **Clonar y configurar credenciales:**
-   ```bash
-   # Crea tu archivo de entorno a partir de la plantilla segura
-   cp .env.example .env
-   ```
-   *Abre el archivo `.env` recién creado y reemplaza `your_groq_api_key_here` con tu API Key real de Groq.*
+# 2. Levantar la infraestructura completa (API + PostgreSQL + Migraciones)
+docker-compose up --build -d
 
-2. **Levantar la Arquitectura:**
-   ```bash
-   docker-compose up --build -d
-   ```
-   *Nota: La primera ejecución descargará el modelo estadístico de spaCy (~500MB) para Presidio. La base de datos PostgreSQL se autoconfigurará y ejecutará migraciones vía Alembic.*
+# 3. Probar la API interactiva en Swagger UI
+# Navegar a: http://localhost:8000/docs
+```
 
-3. **¡Probar!**
-   La API quedará disponible inmediatamente. Abre tu navegador y navega a la documentación interactiva:
-   👉 **[http://localhost:8000/docs](http://localhost:8000/docs)**
+### Opción 2: Ejecución Local (Poetry / venv) 💻
+```bash
+cp .env.example .env
+poetry install
+poetry run python -m spacy download en_core_web_lg
+poetry run alembic upgrade head
+poetry run uvicorn app.main:app --reload
+```
 
-### Opción 2: Desarrollo Local (Poetry / venv) 💻
-Si deseas contribuir al código o correr los tests sin Docker.
-
-1. **Preparar el Entorno:**
-   ```bash
-   cp .env.example .env
-   # Agrega tu GROQ_API_KEY en .env y asegúrate de tener PostgreSQL local corriendo.
-   ```
-2. **Instalar Dependencias:**
-   ```bash
-   poetry install
-   # Descargar el modelo NLP de spaCy para Presidio
-   poetry run python -m spacy download en_core_web_lg
-   ```
-3. **Migraciones e Inicio:**
-   ```bash
-   poetry run alembic upgrade head
-   poetry run uvicorn app.main:app --reload
-   ```
-
-### 🧪 Pruebas Automatizadas (QA)
-Para validar la suite de pruebas unitarias y mocks de aislamiento (100% Passing):
+### 🧪 Ejecución de Pruebas Automatizadas (100% Passing)
 ```bash
 poetry run pytest -v
-# o si usas el venv clásico: .\.venv\Scripts\python.exe -m pytest -v
+# o en venv: .\.venv\Scripts\python.exe -m pytest -v
 ```
 
 ---
 
 # 🧠 PARTE 1: Priorización y Criterio de Negocio
 
-El CTO planteó 5 posibles casos de uso. Como Principal Engineer, la decisión de priorización no se basa en "qué tecnología está de moda", sino en la intersección entre Impacto Directo y Retorno de Inversión (ROI).
+### 1. Priorización de los 5 Casos de Uso
 
-### Matriz de Priorización
+| Rango | Caso de Uso | Complejidad Técnica | Coste / Riesgo | Impacto en Negocio | Time-to-Value | Justificación |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| **1** | **Extracción de datos (PDFs/Emails)** | Media | Bajo / Medio | **Muy Alto** | **1-2 Semanas** | **(MVP Seleccionado)** Elimina el 80% del trabajo manual de data-entry. Alto volumen actual, impacto operativo inmediato. |
+| **2** | **Generación de Reportes** | Media | Bajo / Bajo | Alto | 3-4 Semanas | Automatiza entregables a clientes. Alto valor percibido con bajo riesgo de alucinación si se usa SQL/RAG estructurado. |
+| **3** | **Clasificación y Routing de Tickets** | Baja | Muy Bajo / Bajo | Medio | 1-2 Semanas | Rápido de implementar con modelos pequeños (BERT/8B). Descongestiona soporte técnico. |
+| **4** | **Asistente Chat (Datos SaaS)** | Alta | Alto / Alto | Medio-Alto | 2-3 Meses | Alto riesgo de alucinación de cara al cliente final. Requiere arquitectura RAG robusta y permisos multi-tenant. |
+| **5** | **Validación de Datos (ERP vs CRM)** | Baja | Nulo / Nulo | Alto | 1 Semana | **NO requiere IA Generativa.** Es un problema determinista que se resuelve con reglas e integraciones API directas. |
 
-| Caso de Uso | Complejidad de Implementación | Costo / Riesgo Técnico | Impacto de Negocio | Time-to-Value | Rango de Prioridad |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **1. Extracción Estructurada de CVs** | Media | Bajo/Medio | **Muy Alto** (Elimina 80% data-entry manual) | Rápido (Semanas) | **Prioridad 1 (MVP)** |
-| **2. Reportes (RAG/NLP a SQL)** | Media-Alta | Medio | Alto (Análisis estratégico) | Medio (Meses) | Prioridad 2 |
-| **3. Asistente Chat (Candidatos)** | Alta | Alto (Riesgo de alucinación cara al usuario) | Medio (Soporte nivel 1) | Lento | Prioridad 3 |
-| **4. Clasificación de Tickets IT** | Baja | Bajo | Bajo (Solo optimiza IT, no Core Business) | Rápido | Prioridad 4 |
-| **5. Validación CRM/ERP** | Baja (Reglas puras) | Nulo | Alto (Integridad de datos) | Rápido | **No usar IA Generativa** |
+### 2. Decisión Crítica: ¿Por qué Extracción de Documentos como Punto de Entrada?
+Es el caso de uso con la **mayor relación Impacto / Riesgo**:
+1. **Fricción Operativa Real:** Los equipos humanos pierden cientas de horas leyendo PDFs e ingresando datos manualmente en el SaaS/CRM.
+2. **Entorno Controlado:** La salida es estructurada (JSON) y puede validarse automáticamente con esquemas (Pydantic).
+3. **Bajo Riesgo de Cara al Cliente:** Al incluir un flujo *Human-In-The-Loop (HITL)*, los datos con baja confianza son revisados internamente antes de impactar sistemas críticos.
 
-### 🎯 Decisión Crítica: ¿Por qué Extracción de Documentos como MVP?
-El proceso de lectura humana de CVs e ingreso manual a un ATS es el cuello de botella más grande en talento (alto costo operativo y fricción manual). Implementar un modelo que automatice esto ofrece un **Impacto Inmediato**.
+### 3. Filtro Senior: ¿IA, Reglas o Híbrido?
 
-### 🧐 El Filtro Senior: ¿IA, Reglas, o Híbrido?
-No todos los problemas requieren un Large Language Model.
-- **Validación CRM/ERP:** NO debería usar IA generativa. Se debe resolver al 100% con Reglas Deterministas (Expresiones Regulares, Type Checkers como Pydantic) ya que un LLM es estadístico y costoso para validar formatos rígidos (como que un NIT tenga 9 dígitos).
-- **Extracción de CVs (Este MVP):** Usa un **Enfoque Híbrido**. PyMuPDF (Reglas) para parsear el binario, Presidio (Reglas/NLP Tradicional) para anonimizar nombres y correos, y finalmente un LLM (IA Generativa) exclusivamente para comprender la semántica del historial laboral.
+- **Caso 1 (Extracción PDFs/Emails):** **HÍBRIDO**. Reglas/Regex para parsing binario y sanitización local (Presidio), IA (LLM) para entender la semántica no estructurada del texto.
+- **Caso 2 (Reportes Clientes):** **HÍBRIDO**. IA para interpretar la consulta en lenguaje natural (Text-to-SQL / RAG), Reglas/Engine SQL para calcular los números exactos sin alucinación.
+- **Caso 3 (Routing Tickets):** **IA (Modelos Pequeños / Classifiers)**. Clasificación NLP o LLM 8B enfocado en taxonomía de soporte.
+- **Caso 4 (Asistente Chat):** **IA (RAG Avanzado)**. Embeddings + Vector DB + LLM para síntesis conversacional con guardrails.
+- **Caso 5 (Validación ERP vs CRM):** **REGLAS (DETERMINISTA)**. 
+  - **¿Por qué NO usaría IA aquí?** Validar si el NIT o teléfono en el CRM coincide con el ERP es una comparación de cadenas/números rígida. Usar un LLM aquí añade latencia, costos por token y el riesgo inaceptable de que el LLM "alucine" que dos números distintos son iguales por aproximación estadística.
 
 ---
 
 # 🏗️ PARTE 2: Diseño de Solución (El MVP Construido)
 
-Para construir la extracción de datos, diseñamos un pipeline resiliente y seguro:
-
-### Arquitectura de Alto Nivel (Flujo de Datos End-to-End)
+### 1. Arquitectura de Solución (Alto Nivel)
 
 ```text
-[PDF Upload]
-     │
-     ▼
-(PyMuPDF Parser) ───> Extrae Texto Plano respetando orden de lectura (Sin IA)
-     │
-     ▼
-(Microsoft Presidio) ───> Detecta y Máscara PII localmente (Ej: "Juan" -> <PERSON>)
-     │
-     ▼
-(Groq Llama-3.3 + Instructor) ───> LLM extrae semántica estructurada en JSON estricto
-     │
-     ▼
-(HitL & Confidence Engine) ───> ¿Score < 0.85? -> PENDING. ¿Score >= 0.85? -> APPROVED.
-     │
-     ▼
-(PostgreSQL + SQLAlchemy 2) ───> Persistencia asíncrona usando Patrón Repositorio
+[PDF / Email Input]
+        │
+        ▼
+┌────────────────────────┐
+│  FastAPI Ingestion     │ ◄── Punto de Entrada REST (API Gateway)
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│  PyMuPDF Text Extractor│ ◄── Extracción determinista de texto plano
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│  Microsoft Presidio    │ ◄── Sanitización local de PII (GDPR/Compliance)
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│  AIExtractor (Groq)    │ ◄── LLM (Llama-3.3-70b) + Instructor (Function Calling)
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ Confidence & HITL Engine│ ◄── If Score >= 0.85 -> APPROVED | If < 0.85 -> PENDING
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ PostgreSQL Repository   │ ◄── Persistencia asíncrona (SQLAlchemy 2.0)
+└────────────────────────┘
 ```
+- **Dónde vive la IA:** La IA está encapsulada exclusivamente en el módulo `AIExtractor` en la capa de Infraestructura, desacoplada mediante la interfaz de Dominio `BaseExtractor`.
+- **Integración con Sistemas:** Expone Webhooks y endpoints REST (`POST /api/v1/extract/pdf`) para integrarse transparentemente con el CRM/SaaS existente.
 
-### Control de Outputs y Prevención de Alucinaciones
-Usamos la librería **`instructor`** sobre el cliente de OpenAI/Groq para forzar al LLM (Llama-3.3-70b) a devolver llamadas a funciones (Function Calling/Structured Outputs) que deben cumplir milimétricamente con el esquema Pydantic `CandidateProfile`. Esto elimina las alucinaciones estructurales.
+### 2. Uso Estratégico de IA
 
-### Variante de Arquitectura (MVP vs Producción Escalable)
-- **MVP Actual (Lite):** FastAPI maneja el endpoint de forma síncrona/esperando al LLM. Base de datos monolítica (PostgreSQL local).
-- **Arquitectura Escalable Futura:** Cuando el volumen supere los 10,000 PDFs diarios, extraeríamos la inferencia del LLM a *Workers* asíncronos usando **Celery y RabbitMQ**. El endpoint FastAPI solo recibiría el PDF, lo encolaría y devolvería un `task_id` (Event-Driven Architecture).
+- **¿Dónde usar LLMs?:** Exclusivamente en la transformación de texto desestructurado sanitizado a la entidad Pydantic `CandidateProfile`.
+- **¿Dónde usar Embeddings / Búsqueda Semántica?:** **NO se usan en el pipeline de extracción de 1 documento**. Se utilizarían en una etapa posterior del SaaS para permitir al equipo buscar candidatos por habilidades conceptuales (ej: "experto en microservicios cloud") usando `pgvector` o Qdrant.
+- **¿Usaría RAG?:** **NO para la extracción puntual de CVs**. RAG se requiere cuando el modelo necesita consultar una base de conocimiento externa. En la extracción de CVs, todo el contexto necesario reside dentro del propio documento.
+- **¿Dónde NO usar IA?:** 
+  - Extracción binaria de texto del PDF (usamos `PyMuPDF`).
+  - Detección y enmascaramiento de datos personales PII (usamos `Presidio` con SpaCy NLP local).
+  - Persistencia y validación de tipos de datos (usamos `Pydantic v2` y `SQLAlchemy`).
+
+### 3. Estrategia para Datos
+
+- **Procesamiento de Inputs:** PyMuPDF para archivos PDF; BeautifulSoup + Regex para correos HTML/texto plano.
+- **Calidad antes de IA:** 
+  - Validación de integridad binaria del archivo.
+  - Verificación de longitud mínima de texto (evita PDFs escaneados vacíos sin OCR).
+  - Sanitización estricta de caracteres de control nulos.
+- **Prevención de Errores Críticos:** Reglas heurísticas de respaldo para campos clave (email/teléfono) que verifican el resultado del LLM mediante Expresiones Regulares deterministas.
+
+### 4. Control de Outputs y Prevención de Alucinaciones
+
+- **Prevención de Alucinaciones:** Uso estricto de la librería **`instructor`** aprovechando *Function Calling / Structured Outputs* del LLM. El modelo no responde texto libre, sino que genera argumentos para un esquema JSON predefinido.
+- **Estructura Estricta:** Validación mediante modelos `Pydantic v2`. Si el LLM intenta inventar un campo o tipo de dato, Pydantic dispara un `ValidationError`.
+- **Consistencia & Resiliencia:** Decoradores con **`tenacity`** para reintentar la llamada al LLM con *Exponential Backoff* si ocurren errores transitorios o respuestas malformadas.
+
+### 5. Variante de Arquitectura: MVP vs Producción Escalable
+
+- **Versión Low-Cost / MVP (Implementada):**
+  - Procesamiento síncrono/directo en FastAPI.
+  - Modelo Llama-3.3-70b a través de Groq LPUs (Costo cercano a $0 en volúmenes iniciales).
+  - Base de datos PostgreSQL única.
+- **Versión Escalable (100k+ docs/día):**
+  - **Arquitectura Orientada a Eventos:** Endpoint FastAPI recibe el documento, lo almacena en S3/MinIO y publica un mensaje en **RabbitMQ/Kafka**.
+  - **Workers Asíncronos:** Cluster de workers **Celery** consumen la cola, procesan la IA y notifican vía **Webhooks/WebSockets**.
+  - **Semantic Caching:** Cache de prompts idénticos en **Redis** usando hashes del documento para evitar re-procesar archivos repetidos.
 
 ---
 
 # 🛡️ PARTE 3: Coste, Riesgos y Producción
 
-Llevar IA Generativa a producción implica 3 riesgos principales que este MVP ya mitiga:
+### 1. Control de Costes de LLM en Producción
+- **Model Routing:** Usar un modelo ultra-pequeño (Llama-3.1-8B) para documentos simples o cortos, y escalar a Llama-3.3-70B solo si la confianza de extracción es baja.
+- **Max Tokens Caps & Truncamiento:** Truncar textos irrelevantes (ej: anexos legales en CVs) antes de enviarlos al LLM.
+- **Prompt Caching / Semantic Cache:** Almacenar en Redis las respuestas de documentos con hash idéntico.
 
-1. **Riesgo de Privacidad (PII):** Enviar datos sensibles (Nombres, Correos, Teléfonos) a APIs de OpenAI o Groq viola políticas GDPR/CCPA.
-   * **Mitigación implementada:** Usamos **Microsoft Presidio** ejecutándose localmente en nuestro servidor para anonimizar los datos antes de la red.
-2. **Control de Costos y Latencia:** GPT-4o es costoso. 
-   * **Mitigación implementada:** Utilizamos el modelo Open Source **Llama-3.3-70b-versatile** alojado en Groq, que ofrece velocidad ultrarrápida (LPUs) a un coste marginal por millón de tokens, manteniendo una precisión comparable en extracción estructurada.
-3. **Caídas de Proveedor (Rate Limits):** 
-   * **Mitigación implementada:** Usamos la librería **`tenacity`** para inyectar *Exponential Backoff*. Si la cuota del LLM se agota, el sistema reintenta inteligentemente sin crashear. Además, implementamos degradación elegante (Graceful Fallback) en Base de Datos.
+### 2. Trade-Offs Explícitos
+
+1. **Calidad vs Costo:** 
+   * *Decisión:* Elegimos **Llama-3.3-70B en Groq** sobre GPT-4o. Ofrece un 95%+ de la calidad de GPT-4o para extracción de entidades a una fracción de su costo ($0.59 vs $5.00 por millón de tokens).
+2. **Latencia vs Precisión:** 
+   * *Decisión:* Priorizamos la **Precisión** incluyendo sanitización PII previa y validación Pydantic posterior, aceptando un overhead de ~300ms local a cambio de 0% alucinaciones estructurales.
+3. **Modelo Grande vs Modelo Pequeño:** 
+   * *Decisión:* Usamos un **Modelo Grande (70B)** para el MVP porque los modelos pequeños (8B) sufren al extraer esquemas JSON complejos con campos anidados.
+
+### 3. Escalabilidad (Crecimiento 10x)
+- Inserción de capas de colas asíncronas (**RabbitMQ + Celery Workers**).
+- Desacoplamiento de la base de datos con **Connection Pooling (PgBouncer)** y réplicas de lectura.
+- Autoscale horizontal de contenedores FastAPI en Kubernetes / AWS ECS basado en uso de CPU y profundidad de cola.
+
+### 4. Seguridad, Riesgos y Compliance
+
+- **Datos Sensibles (PII):** Ingesta filtrada localmente con **Microsoft Presidio** (SpaCy) *antes* de que cualquier dato salga a la API del proveedor de LLM.
+- **Multi-Tenant (Aislamiento de Clientes):**
+  - Filtrado a nivel de Base de Datos usando `tenant_id` obligatorio en todas las consultas del Repositorio.
+  - Implementación de **Row Level Security (RLS)** en PostgreSQL para prevenir fuga de datos entre inquilinos.
+- **Prompt Injection (en sistemas RAG/LLM):**
+  - Sanitización de caracteres de escape e instrucciones de control en el input del usuario.
+  - Separación estricta entre el *System Prompt* (instrucciones inmuta bles del sistema) y el *User Content* dentro de la estructura de mensajes del API.
+- **Trazabilidad:** Registro estructurado (JSON Logs) de cada solicitud incluyendo `document_id`, `confidence_score`, latencia del proveedor y versión del modelo LLM utilizado.
 
 ---
 
 # 🚀 PARTE 4: Implementación, Adopción y Métricas
 
-### De Prototipo a Producción Continua
-El camino para que el equipo de Talento adopte esta herramienta no es reemplazar a los reclutadores, sino potenciar su embudo. Por eso se construyó el módulo **HITL (Human-In-The-Loop)**. Todos los documentos con confianza menor al 85% caen a una bandeja de `PENDING` para revisión humana. A medida que el modelo mejore y gane confianza (Fine-tuning futuro), el umbral se podrá bajar.
+### 1. De Idea a Producción (Roadmap)
+1. **Prototipo (Días 1-3):** Script en Python procesando PDFs locales con Instructor y mostrando JSONs en consola.
+2. **MVP (Semanas 1-2 - *Estado Actual*):** API FastAPI con Clean Architecture, sanitización PII, base de datos PostgreSQL, suite de tests y Docker Compose.
+3. **Producción (Meses 1-2):** Despliegue de colas asíncronas (Celery), métricas en Prometheus/Grafana, arquitectura multi-tenant con RLS y pipelines CI/CD.
 
-### Definición de Métricas (KPIs)
+### 2. Colaboración con Equipos Internos
+- **Ingeniería:** Entrega de contratos OpenAPI (`openapi.json`) estrictos y SDKs/Webhooks para que los desarrolladores consuman la API sin fricción.
+- **Producto:** Definición conjunta del umbral de confianza (0.85) para la bandeja de revisión humana (HITL) y diseño de la interfaz de aprobación.
+- **Negocio:** Reportes de métricas de ahorro de tiempo y costo por documento procesado para justificar el ROI.
 
-Para asegurar el éxito del proyecto ante los stakeholders, mediremos:
+### 3. Estrategia de Adopción
+- **Cero Fricción en el Workflow:** No obligar a los usuarios a usar un nuevo software; los datos procesados por la IA se inyectan automáticamente en el SaaS/CRM existente.
+- **Confianza Progresiva (HITL):** En la fase inicial, el 100% de las extracciones pasan por revisión humana rápida. A medida que los usuarios comprueban la precisión de la IA, la bandeja HITL solo recibe los casos borde (<85% confianza).
 
-**2 Métricas Técnicas:**
-- **Latencia del Pipeline (p95):** Tiempo de respuesta End-to-End < 2.5 segundos por documento (logrado actualmente gracias a Groq LPUs y bases asíncronas).
-- **Tasa de Extracción Estructurada Exitosa:** > 98% de solicitudes donde Pydantic no arroja `ValidationError` por alucinaciones estructurales del LLM.
+### 4. Métricas de Éxito (KPIs)
 
-**2 Métricas de Negocio:**
-- **Reducción de Tiempo de Procesamiento (Operativa):** Reducción de > 80% en el tiempo empleado por los reclutadores para digitalizar datos de CVs hacia la plataforma ATS.
-- **Retorno de Inversión (ROI):** Alcanzar ROI positivo en < 3 meses (calculado por horas-hombre ahorradas vs coste de infraestructura Groq/Cloud).
+#### 2 Métricas Técnicas:
+1. **Latencia del Pipeline (p95):** `< 2.5 segundos` por documento end-to-end.
+2. **Tasa de Extracción Estructurada Exitosa:** `> 98%` de procesamientos sin `ValidationError` o fallos de esquema.
+
+#### 2 Métricas de Negocio:
+1. **Reducción de Tiempo Operativo:** `> 80%` de reducción en el tiempo que los empleados dedican al ingreso manual de datos.
+2. **Retorno de Inversión (ROI):** Lograr un ROI positivo en `< 3 meses`, comparando el costo de infraestructura contra las horas-hombre ahorradas.
 
 ---
-*Desarrollado para la Evaluación Técnica de Talento.*
+*Desarrollado para la Evaluación Técnica de Dev Talenty.*
