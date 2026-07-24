@@ -352,3 +352,57 @@ sin fricción, encontrando una arquitectura limpia y auditable.
 ================================================================================
   FIN DEL REGISTRO 16
 ================================================================================
+
+================================================================================
+  Registro 17: Alineación con la Matriz de Evaluación Dev Talenty y Sanitización DevSecOps
+  Fecha: 2026-07-24
+  Fase: 9 — Auditoría Final y Release
+================================================================================
+
+1. ALINEACIÓN DE NEGOCIO (EL README.md)
+───────────────────────────────────────
+
+El README del proyecto no es un simple manual técnico. Fue estructurado para 
+responder directamente a los criterios de evaluación de Dev Talenty, fungiendo 
+como un Documento de Diseño (RFC/Design Doc) ejecutivo:
+
+- Matriz de Priorización: Se justificó la elección de la Extracción de CVs como 
+  el MVP, balanceando el impacto inmediato en el reclutamiento vs el costo 
+  técnico. Se descartaron opciones puramente deterministas (Validación ERP) 
+  para demostrar el uso correcto del filtro IA vs Reglas.
+- Diseño de Solución: Se explicó la justificación del Enfoque Híbrido. Usar 
+  solo LLMs para extraer PII es peligroso; usar solo Regex es frágil. PyMuPDF + 
+  Presidio + Instructor(LLM) proveen el pipeline ideal.
+- Costos y Riesgos: Se documentó la mitigación de la latencia usando Groq (LPUs) 
+  y Llama-3.3-70b (Open Source) para evitar el vendor lock-in costoso de OpenAI, 
+  así como la mitigación de seguridad bloqueando el envío de PII a APIs públicas.
+
+2. AUDITORÍA DEVSECOPS Y SANITIZACIÓN FINAL
+───────────────────────────────────────────
+
+Antes del release final, el repositorio fue auditado para cumplir con 
+políticas estrictas de Zero-Secret-Leakage:
+
+a) Generación de .env.example:
+   Se extrajeron las llaves del `.env` local, construyendo una plantilla limpia 
+   `.env.example` que preserva la estructura de configuración (incluyendo los 
+   strings de conexión PostgreSQL locales y flags como DEBUG=true) pero enmascara 
+   la `GROQ_API_KEY`. Esto permite una clonación Zero-Friction por parte del 
+   evaluador.
+
+b) Purga de Contexto Interno:
+   Se eliminaron completamente del sistema de archivos y del trackeo de Git 
+   los archivos `contexto_asistente.md` y `contexto_antigravity.md`, los cuales 
+   contenían instrucciones de orquestación interna irrelevantes para la evaluación 
+   final. El proyecto expone exclusivamente el código fuente, el README.md y esta 
+   explicación técnica.
+
+c) Validación de Índice de Git:
+   Se verificó vía `git status` que el archivo `.gitignore` configurado 
+   previamente estuviera operando correctamente. Entornos virtuales, 
+   archivos .env locales, PDFs de prueba y directorios de caché han quedado 
+   completamente aislados del commit final de entrega.
+
+================================================================================
+  FIN DEL REGISTRO 17
+================================================================================

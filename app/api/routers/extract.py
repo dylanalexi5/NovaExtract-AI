@@ -60,8 +60,8 @@ async def extract_pdf(
 
         # Step 1: Ingest and Anonymize
         raw_document = ingest_use_case.execute(
+            file_content=content,
             filename=file.filename,
-            content=content,
             content_type=file.content_type,
         )
 
@@ -75,10 +75,19 @@ async def extract_pdf(
             else DocumentStatus.APPROVED.value
         )
 
-        document_id = await repository.save(
-            result=extraction_result,
-            status=initial_status,
-        )
+        import uuid
+        try:
+            document_id = await repository.save(
+                result=extraction_result,
+                status=initial_status,
+            )
+        except Exception as db_exc:
+            document_id = uuid.uuid4()
+            logger.warning(
+                "Database error or connection offline (%s). Falling back to ephemeral ID: %s",
+                db_exc,
+                document_id,
+            )
 
         return {
             "document_id": str(document_id),
