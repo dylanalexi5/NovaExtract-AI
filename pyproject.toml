@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "devtalenty-ai-extractor"
+name = "novaextract-ai"
 version = "0.1.0"
-description = "API híbrida de extracción de datos desde CVs usando Reglas + IA con instructor y Pydantic v2."
-authors = ["DevTalenty <dev@devtalenty.com>"]
+description = "API híbrida de extracción de datos desde CVs usando reglas e IA con instructor y Pydantic v2."
+authors = ["Dylan Rivera <dylanpasto@hotmail.com>"]
 readme = "README.md"
 packages = [{ include = "app" }]
 

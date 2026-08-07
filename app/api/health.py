@@ -18,4 +18,4 @@ router = APIRouter(tags=["Health"])
 )
 async def healthcheck() -> dict[str, str]:
     """Returns operational status of the API."""
-    return {"status": "ok", "service": "devtalenty-ai-extractor"}
+    return {"status": "ok", "service": "novaextract-ai"}

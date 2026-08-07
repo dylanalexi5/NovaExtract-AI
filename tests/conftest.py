@@ -1,5 +1,5 @@
 """
-Shared Pytest Fixtures for DevTalenty AI Extractor.
+Shared Pytest Fixtures for NovaExtract AI.
 
 This module provides mocks and dummy payloads to isolate tests from
 external I/O (Database, Groq/OpenAI, and File System).

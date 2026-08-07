@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     )
 
     # ── App ──────────────────────────────────────────────────────────────
-    APP_NAME: str = "DevTalenty AI Extractor"
+    APP_NAME: str = "NovaExtract AI"
     APP_VERSION: str = "0.1.0"
     APP_DESCRIPTION: str = (
-        "Hybrid data extraction API for CVs using Rules + AI with Instructor and Pydantic v2."
+        "Hybrid data extraction API for CVs using rules and AI with Instructor and Pydantic v2."
     )
     DEBUG: bool = False
 
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # ── External LLM (OpenAI / Groq) ─────────────────────────────────────
     OPENAI_API_KEY: str
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MODEL: str = "llama-3.3-70b-versatile"
     OPENAI_BASE_URL: str | None = None
 
     # ── Environment ──────────────────────────────────────────────────────

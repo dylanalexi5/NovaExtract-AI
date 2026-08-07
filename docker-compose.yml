@@ -5,11 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: devtalenty-api
+    container_name: novaextract-api
     ports:
       - "8000:8000"
     environment:
-      - APP_NAME=DevTalenty AI Extractor
+      - APP_NAME=NovaExtract AI
       - APP_VERSION=0.1.0
       - DEBUG=false
       - ENVIRONMENT=production
@@ -17,11 +17,11 @@ services:
       - PORT=8000
       - CORS_ORIGINS=["*"]
       # Database Connection
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/devtalenty
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/novaextract
       # LLM Provider Configuration
       - OPENAI_BASE_URL=https://api.groq.com/openai/v1
       - OPENAI_API_KEY=${OPENAI_API_KEY}  # Will be read from local environment or .env
-      - OPENAI_MODEL=llama-3.1-8b-instant
+      - OPENAI_MODEL=llama-3.3-70b-versatile
     depends_on:
       db:
         condition: service_healthy
@@ -30,17 +30,17 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: devtalenty-db
+    container_name: novaextract-db
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=devtalenty
+      - POSTGRES_DB=novaextract
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d devtalenty"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d novaextract"]
       interval: 5s
       timeout: 5s
       retries: 5

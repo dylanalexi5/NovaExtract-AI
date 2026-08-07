@@ -27,8 +27,3 @@ ENV/
 *.pdf
 Pruebas/
 tests/
-
-# Documentación Técnica
-explicacion_tecnica.txt
-contexto_antigravity.md
-contexto_asistente.md

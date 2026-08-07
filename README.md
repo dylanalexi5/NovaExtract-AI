@@ -1,6 +1,6 @@
-# DevTalenty AI Extractor 🚀
+# NovaExtract AI 🚀
 
-**DevTalenty AI Extractor** es una solución enterprise backend construida con **FastAPI**, **Clean Architecture** y **Groq LPUs (Llama-3.3-70b)**, diseñada para resolver la automatización de procesos no estructurados (extracción de datos de CVs/documentos) en empresas SaaS B2B que transicionan hacia un modelo *AI-First*.
+**NovaExtract AI** es una solución backend de extracción de datos construida con **FastAPI**, **Clean Architecture** y **Groq LPUs (Llama-3.3-70b)**, diseñada para automatizar la extracción estructurada de CVs y documentos en empresas SaaS B2B.
 
 ---
 
@@ -18,7 +18,7 @@ cp .env.example .env
 # Reemplazar GROQ_API_KEY en .env con tu API Key real
 
 # 2. Levantar la infraestructura completa (API + PostgreSQL + Migraciones)
-docker-compose up --build -d
+docker compose up --build -d
 
 # 3. Probar la API interactiva en Swagger UI
 # Navegar a: http://localhost:8000/docs
@@ -151,7 +151,7 @@ Es el caso de uso con la **mayor relación Impacto / Riesgo**:
 # 🛡️ PARTE 3: Coste, Riesgos y Producción
 
 ### 1. Control de Costes de LLM en Producción
-- **Model Routing:** Usar un modelo ultra-pequeño (Llama-3.1-8B) para documentos simples o cortos, y escalar a Llama-3.3-70B solo si la confianza de extracción es baja.
+- **Modelo Seleccionado:** `llama-3.3-70b-versatile` como el balance más sólido para extracción semántica y estructura de CVs en Groq.
 - **Max Tokens Caps & Truncamiento:** Truncar textos irrelevantes (ej: anexos legales en CVs) antes de enviarlos al LLM.
 - **Prompt Caching / Semantic Cache:** Almacenar en Redis las respuestas de documentos con hash idéntico.
 
@@ -209,7 +209,7 @@ Es el caso de uso con la **mayor relación Impacto / Riesgo**:
 2. **Retorno de Inversión (ROI):** Lograr un ROI positivo en `< 3 meses`, comparando el costo de infraestructura contra las horas-hombre ahorradas.
 
 ---
-*Desarrollado para la Evaluación Técnica de Dev Talenty.*
+*NovaExtract AI está construida para ser un proyecto profesional listo para reclutadores de software e IA.*
 
 ---
 
