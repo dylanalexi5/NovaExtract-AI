@@ -36,7 +36,7 @@ def download_model(model_name: str) -> bool:
 
 def main() -> None:
     print("=" * 60)
-    print("  DevTalenty AI Extractor — NLP Models Setup")
+    print("  NovaExtract AI — NLP Models Setup")
     print("=" * 60)
     print("\nRequired spaCy models for Presidio PII detection:\n")
 

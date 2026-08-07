@@ -1,1 +1,1 @@
-# DevTalenty AI Extractor - Application Package
+# NovaExtract AI - Application Package
